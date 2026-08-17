@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/Chip8.dir/main.cpp.o -o Chip8  -Wl,-rpath,/usr/local/lib /usr/local/lib/libSDL3.so.0.5.0 
