@@ -95,6 +95,85 @@ void chip8::emulateCycle(){
 	// Fetch opcode by ORing adjacent bytes
 	opcode = (memory[pc] << 8) | memory[pc + 1];
 	// Decode
+	switch(opcode & 0xF000)
+	{
+	case 0x0000:
+		stack[sp] = pc;
+		sp++;
+		pc = (opcode & 0x0FFF)
+		break;
+	case 0x1000:
+		pc = (opcode & 0x0FFF)
+		break;
+	case 0x2000:
+		stack[sp] = pc;
+		sp++;
+		pc = (opcode & 0x0FFF)
+		break;
+	case 0x3000:
+		if((V[opcode & 0x0F00] >> 8) == (opcode & 0x00FF)){
+			pc++;
+		}
+		break;
+	case 0x4000:
+		if((V[opcode & 0x0F00] >> 8) != (opcode & 0x00FF)){
+			pc++;
+		}
+		break;
+	case 0x5000:
+		if((V[opcode & 0x0F00] >> 8) == (V[opcode & 0x00F0] >> 4)){
+			pc++;
+		}
+		break;
+	case 0x6000:
+		V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
+		break;
+	case 0x8000:
+		X = (opcode & 0x0F00) >> 8;
+		Y = (opcode & 0x00F0) >> 4;
+		switch(opcode & 0x000F){
+		case 0x0000:
+			V[X] = V[Y]
+			break;
+		case 0x0001:
+			V[X] = V[X] | V[Y]
+			break;
+		case 0x0002:
+			V[X] = V[X] & V[Y]
+			break;
+		case 0x0003:
+			V[X] = V[X] ^ V[Y]
+			break;
+		case 0x0004:
+			V[0xF] = (V[X] > 255 - V[Y]) ? 1 : 0;
+			V[X] += V[Y];
+			break;
+		case 0x0005:
+			// Note that VF is 0 when underflow and 1 otherwise
+			V[0xF] = (V[X] >= V[Y]) ? 1 : 0;
+			V[X] -= V[Y];
+			break;
+		case 0x0006:
+			V[0xF] = V[X] & 0x0001;
+			V[X] = V[X] >> 1;
+			break;
+		case 0x0007:
+			// Note that VF is 0 when underflow and 1 otherwise
+			V[0xF] = (V[X] <= V[Y]) ? 1 : 0;
+			V[X] = V[Y] - V[X];
+			break;
+		case 0x000E:
+			V[0xF] = (V[X] & 0x8000) >> 12;
+			V[X] = V[X] << 1;
+			break;
+		}
+		break;
+	case 0x9000:
+		if(V[(opcode&0x0F00) >> 8] != V[(opcode&0x0F00) >> 4]){
+			pc++;
+		}
+		break;
+	}
 
 
 	// Update timers

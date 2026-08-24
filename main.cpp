@@ -9,6 +9,8 @@ constexpr int windowHeight = 32;
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
+chip8 myChip8;
+
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     SDL_SetAppMetadata("Chip8 Example", "1.0", "com.example.chip8");
 
@@ -27,6 +29,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     // For letterboxing to be used with resizing window
     SDL_SetRenderLogicalPresentation(renderer, windowWidth, windowHeight, 
         SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+    myChip8.initialize();
 
     return SDL_APP_CONTINUE;
 }
