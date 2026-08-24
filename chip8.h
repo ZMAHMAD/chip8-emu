@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
 class chip8 {
@@ -173,6 +175,67 @@ void chip8::emulateCycle(){
 			pc++;
 		}
 		break;
+	case 0xA000:
+		I = opcode & 0x0FFF;
+		break;
+	case 0xB000:
+		pc = V[0] + (opcode&0x0FFF);
+		break;
+	case 0xC000:
+		srand(time(0));
+		V[(opcode&0x0F00) >> 8] = (opcode&0x00FF) & (rand() % 256);
+		break;
+	case 0xD000:
+		// Sprite Operation
+		break;
+	case 0xE000:
+		// Key Operations
+		switch(opcode&0x00FF){
+		case 0x009E:
+			break;
+		case 0x00A1:
+			break;
+		}
+		break;
+	case 0xF000:
+		switch(opcode&0x00FF){
+		case 0x0007:
+			V[(opcode&0x0F00) >> 8] = delay_timer;
+			break;
+		case 0x000A:
+			// Key Operation
+			break;
+		case 0x0015:
+			delay_timer = V[(opcode&0x0F00) >> 8];
+			break;
+		case 0x0018:
+			sound_timer = V[(opcode&0x0F00) >> 8];
+			break;
+		case 0x001E:
+			I += V[(opcode&0x0F00) >> 8];
+			break;
+		case 0x0029:
+			// Sprite Operation
+			break;
+		case 0x0033:
+			X = V[(opcode&0x0F00) >> 8];
+			mem[I] = X / 100;
+			mem[I+1] = (X / 10) % 10;
+			mem[I+2] = X % 10;
+			break;
+		case 0x0055:
+			X = V[(opcode&0x0F00) >> 8];
+			for(int i=0; i<X+1; i++){
+				mem[I+i] = V[i];
+			}
+			break;
+		case 0x0065:
+			X = V[(opcode&0x0F00) >> 8];
+			for(int i=0; i<X+1; i++){
+				V[i] = mem[I+i];
+			}
+			break;
+		}
 	}
 
 
