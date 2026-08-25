@@ -23,13 +23,6 @@ public:
 	// 0x200 - 0xFFF - Program ROM and RAM
 	unsigned char memory[4096];
 
-	// Graphics in XOR mode: if pixel turns off, VF set for collision
-	// A B O
-	// 0 0 0
-	// 0 1 1
-	// 1 0 1
-	// 1 1 0
-
 	// pixel states (64 x 32), 1 or 0
 	unsigned char gfx[64 * 32];
 
@@ -105,6 +98,7 @@ void chip8::emulateCycle(){
 		case 0x00E0:
 			// Clear display
 			fill(gfx.begin(), gfx.end(), 0);
+			drawFlag = true;
 			break;
 		case 0x00EE:
 			pc = stack[sp];
@@ -250,8 +244,18 @@ void chip8::emulateCycle(){
 		// Key Operations
 		switch(opcode&0x00FF){
 		case 0x009E:
+			if(key[(V[(opcode&0x0F00) >> 8]&0x0F)] != 0){
+				pc += 4;
+			} else {
+				pc += 2;
+			}
 			break;
 		case 0x00A1:
+			if(key[(V[(opcode&0x0F00) >> 8]&0x0F)] == 0){
+				pc += 4;
+			} else {
+				pc += 2;
+			}
 			break;
 		}
 		break;
@@ -263,6 +267,29 @@ void chip8::emulateCycle(){
 			break;
 		case 0x000A:
 			// Key Operation
+			unsigned short X = (opcode & 0x0F00) >> 8;
+			bool keyPressed = false;
+			while(!keyPressed){
+				SDL_Event event;
+				while (SDL_PollEvent(&event)){
+					if(event.type == SDL_EVENT_QUIT){
+						S_EXIT();
+					} else if(event.type ==  SDL_EVENT_KEY_DOWN){
+						uint8_t c8key = scancodeToChip8(event.key.scancode);
+						if (c8key != 0xFF){
+							key[c8key] = 1;
+							V[X] = c8key;
+							keyPressed = true;
+						}
+					} else if(event.type == SDL_EVENT_KEY_UP){
+						uint8_t c8key = scancodeToChip8(event.key.scancode);
+						if(c8key != 0xFF){
+							key[c8key] = 0;
+						}
+					}
+				}
+			}
+			pc += 2;
 			break;
 		case 0x0015:
 			delay_timer = V[(opcode&0x0F00) >> 8];
@@ -308,8 +335,14 @@ void chip8::emulateCycle(){
 
 
 	// Update timers
-	if (not delay_timer) delay_timer--;
-	if (not sound_timer) sound_timer--;
+	if (delay_timer > 0) delay_timer--;
+	if (sound_timer > 0) {
+		if(sound_timer == 1){
+			// TODO: make actual sound
+			printf("BEEP!\n");
+		}
+		sound_timer--;
+	}
 }
 
 unsigned char chip8_fontset[80] =
@@ -331,3 +364,34 @@ unsigned char chip8_fontset[80] =
   0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+
+// Maps SDL scancodes to CHIP-8 hex key values
+uint8_t scancodeToChip8(SDL_Scancode code) {
+    switch(code){
+    case SDL_SCANCODE_1: return 0x1;
+    case SDL_SCANCODE_2: return 0x2;
+    case SDL_SCANCODE_3: return 0x3;
+    case SDL_SCANCODE_4: return 0xC;
+
+    case SDL_SCANCODE_Q: return 0x4;
+    case SDL_SCANCODE_W: return 0x5;
+    case SDL_SCANCODE_E: return 0x6;
+		case SDL_SCANCODE_R: return 0xD;
+
+		case SDL_SCANCODE_A: return 0x7;
+		case SDL_SCANCODE_S: return 0x8;
+		case SDL_SCANCODE_D: return 0x9;
+		case SDL_SCANCODE_F: return 0xE;
+
+		case SDL_SCANCODE_Z: return 0xA;
+		case SDL_SCANCODE_X: return 0x0;
+		case SDL_SCANCODE_C: return 0xB;
+		case SDL_SCANCODE_V: return 0xF;
+
+		default: return 0xFF; // sentinel: not a CHIP-8 key
+    }
+}
+
+SDL_AppResult S_EXIT() {
+    return SDL_APP_SUCCESS;
+}
