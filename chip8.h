@@ -38,6 +38,8 @@ public:
 	// buzzer when sound_timer nonzero. Write-only
 	unsigned char delay_timer;
 	unsigned char sound_timer;
+	bool drawFlag;		// if flag set, update screen
+
 
 	// stack + sp
 	unsigned short stack[16];
@@ -49,7 +51,6 @@ public:
 	void initialize();		// initialize memory
 	char loadGame(char* filename);		// load program into memory
 	void emulateCycle();	// emulate one cycle
-	bool drawFlag();		// if flag set, update screen
 	void setKeys();			// store key press
 };
 
@@ -223,9 +224,26 @@ void chip8::emulateCycle(){
 		break;
 	case 0xD000:
 		// Sprite Operation
+		unsigned short X = V[(opcode&0x0F00)>>8];
+		unsigned short Y = V[(opcode&0x00F0)>>8];
+		unsigned short height = opcode&0x000F;
+		unsigned short pixel;
 
+		V[0xF] = 0;
+		for(int yline = 0; yline < height; yline++){
+			pixel = memory[I+yline];
 
+			for(int xline = 0; xline < 8; xline++){
+				if(pixel & (0x80 >> xline) != 0) {
+					if(gfx[(x + xline + ((y + yline) * 64)) % (64*32)] == 1){
+						V[0xF] = 1;
+					}
+					// sprites wrap around to start of array
+					gfx[(x + xline + ((y + yline) * 64)) % (64*32)] ^= 1;
+				}
+		}
 
+		drawFlag = true;
 		pc += 2;
 		break;
 	case 0xE000:
@@ -260,25 +278,28 @@ void chip8::emulateCycle(){
 			break;
 		case 0x0029:
 			// Sprite Operation
+			unsigned short X = (opcode&0x0F00) >> 8;
+			X = V[X] & 0x0F;
+			I = memory[80+(5*X)];
 			break;
 		case 0x0033:
 			unsigned short X = V[(opcode&0x0F00) >> 8];
-			mem[I] = X / 100;
-			mem[I+1] = (X / 10) % 10;
-			mem[I+2] = X % 10;
+			memory[I] = X / 100;
+			memory[I+1] = (X / 10) % 10;
+			memory[I+2] = X % 10;
 			pc += 2;
 			break;
 		case 0x0055:
 			unsigned short X = V[(opcode&0x0F00) >> 8];
 			for(int i=0; i<X+1; i++){
-				mem[I+i] = V[i];
+				memory[I+i] = V[i];
 			}
 			pc += 2;
 			break;
 		case 0x0065:
 			unsigned short X = V[(opcode&0x0F00) >> 8];
 			for(int i=0; i<X+1; i++){
-				V[i] = mem[I+i];
+				V[i] = memory[I+i];
 			}
 			pc += 2;
 			break;
@@ -287,6 +308,8 @@ void chip8::emulateCycle(){
 
 
 	// Update timers
+	if (not delay_timer) delay_timer--;
+	if (not sound_timer) sound_timer--;
 }
 
 unsigned char chip8_fontset[80] =
