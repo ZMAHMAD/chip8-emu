@@ -100,35 +100,58 @@ void chip8::emulateCycle(){
 	switch(opcode & 0xF000)
 	{
 	case 0x0000:
-		stack[sp] = pc;
-		sp++;
-		pc = (opcode & 0x0FFF)
-		break;
+		switch(opcode& 0x0FFF){
+		case 0x00E0:
+			// Clear display
+			fill(gfx.begin(), gfx.end(), 0);
+			break;
+		case 0x00EE:
+			pc = stack[sp];
+			sp--;
+			pc += 2;
+			break;
+		default:
+			stack[sp] = pc;
+			sp++;
+			pc = (opcode & 0x0FFF);
+			break;
+		}
 	case 0x1000:
-		pc = (opcode & 0x0FFF)
+		pc = (opcode & 0x0FFF);
 		break;
 	case 0x2000:
 		stack[sp] = pc;
 		sp++;
-		pc = (opcode & 0x0FFF)
+		pc = (opcode & 0x0FFF);
 		break;
 	case 0x3000:
 		if((V[opcode & 0x0F00] >> 8) == (opcode & 0x00FF)){
-			pc++;
+			pc += 4;
+		} else {
+			pc += 2;
 		}
 		break;
 	case 0x4000:
 		if((V[opcode & 0x0F00] >> 8) != (opcode & 0x00FF)){
-			pc++;
+			pc += 4;
+		} else {
+			pc += 2;
 		}
 		break;
 	case 0x5000:
 		if((V[opcode & 0x0F00] >> 8) == (V[opcode & 0x00F0] >> 4)){
-			pc++;
+			pc += 4;
+		} else {
+			pc += 2;
 		}
 		break;
 	case 0x6000:
 		V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
+		pc += 2;
+		break;
+	case 0x7000:
+		V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
+		pc += 2;
 		break;
 	case 0x8000:
 		X = (opcode & 0x0F00) >> 8;
@@ -136,47 +159,59 @@ void chip8::emulateCycle(){
 		switch(opcode & 0x000F){
 		case 0x0000:
 			V[X] = V[Y]
+			pc += 2;
 			break;
 		case 0x0001:
 			V[X] = V[X] | V[Y]
+			pc += 2;
 			break;
 		case 0x0002:
 			V[X] = V[X] & V[Y]
+			pc += 2;
 			break;
 		case 0x0003:
 			V[X] = V[X] ^ V[Y]
+			pc += 2;
 			break;
 		case 0x0004:
 			V[0xF] = (V[X] > 255 - V[Y]) ? 1 : 0;
 			V[X] += V[Y];
+			pc += 2;
 			break;
 		case 0x0005:
 			// Note that VF is 0 when underflow and 1 otherwise
 			V[0xF] = (V[X] >= V[Y]) ? 1 : 0;
 			V[X] -= V[Y];
+			pc += 2;
 			break;
 		case 0x0006:
 			V[0xF] = V[X] & 0x0001;
 			V[X] = V[X] >> 1;
+			pc += 2;
 			break;
 		case 0x0007:
 			// Note that VF is 0 when underflow and 1 otherwise
 			V[0xF] = (V[X] <= V[Y]) ? 1 : 0;
 			V[X] = V[Y] - V[X];
+			pc += 2;
 			break;
 		case 0x000E:
 			V[0xF] = (V[X] & 0x8000) >> 12;
 			V[X] = V[X] << 1;
+			pc += 2;
 			break;
 		}
 		break;
 	case 0x9000:
 		if(V[(opcode&0x0F00) >> 8] != V[(opcode&0x0F00) >> 4]){
-			pc++;
+			pc += 4;
+		} else {
+			pc += 2;
 		}
 		break;
 	case 0xA000:
 		I = opcode & 0x0FFF;
+		pc += 2;
 		break;
 	case 0xB000:
 		pc = V[0] + (opcode&0x0FFF);
@@ -184,9 +219,12 @@ void chip8::emulateCycle(){
 	case 0xC000:
 		srand(time(0));
 		V[(opcode&0x0F00) >> 8] = (opcode&0x00FF) & (rand() % 256);
+		pc += 2;
 		break;
 	case 0xD000:
 		// Sprite Operation
+
+		pc += 2;
 		break;
 	case 0xE000:
 		// Key Operations
@@ -201,18 +239,22 @@ void chip8::emulateCycle(){
 		switch(opcode&0x00FF){
 		case 0x0007:
 			V[(opcode&0x0F00) >> 8] = delay_timer;
+			pc += 2;
 			break;
 		case 0x000A:
 			// Key Operation
 			break;
 		case 0x0015:
 			delay_timer = V[(opcode&0x0F00) >> 8];
+			pc += 2;
 			break;
 		case 0x0018:
 			sound_timer = V[(opcode&0x0F00) >> 8];
+			pc += 2;
 			break;
 		case 0x001E:
 			I += V[(opcode&0x0F00) >> 8];
+			pc += 2;
 			break;
 		case 0x0029:
 			// Sprite Operation
@@ -222,18 +264,21 @@ void chip8::emulateCycle(){
 			mem[I] = X / 100;
 			mem[I+1] = (X / 10) % 10;
 			mem[I+2] = X % 10;
+			pc += 2;
 			break;
 		case 0x0055:
 			X = V[(opcode&0x0F00) >> 8];
 			for(int i=0; i<X+1; i++){
 				mem[I+i] = V[i];
 			}
+			pc += 2;
 			break;
 		case 0x0065:
 			X = V[(opcode&0x0F00) >> 8];
 			for(int i=0; i<X+1; i++){
 				V[i] = mem[I+i];
 			}
+			pc += 2;
 			break;
 		}
 	}
