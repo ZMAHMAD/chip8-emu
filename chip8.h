@@ -154,8 +154,8 @@ void chip8::emulateCycle(){
 		pc += 2;
 		break;
 	case 0x8000:
-		X = (opcode & 0x0F00) >> 8;
-		Y = (opcode & 0x00F0) >> 4;
+		unsigned short X = (opcode & 0x0F00) >> 8;
+		unsigned short Y = (opcode & 0x00F0) >> 4;
 		switch(opcode & 0x000F){
 		case 0x0000:
 			V[X] = V[Y]
@@ -224,6 +224,8 @@ void chip8::emulateCycle(){
 	case 0xD000:
 		// Sprite Operation
 
+
+
 		pc += 2;
 		break;
 	case 0xE000:
@@ -260,21 +262,21 @@ void chip8::emulateCycle(){
 			// Sprite Operation
 			break;
 		case 0x0033:
-			X = V[(opcode&0x0F00) >> 8];
+			unsigned short X = V[(opcode&0x0F00) >> 8];
 			mem[I] = X / 100;
 			mem[I+1] = (X / 10) % 10;
 			mem[I+2] = X % 10;
 			pc += 2;
 			break;
 		case 0x0055:
-			X = V[(opcode&0x0F00) >> 8];
+			unsigned short X = V[(opcode&0x0F00) >> 8];
 			for(int i=0; i<X+1; i++){
 				mem[I+i] = V[i];
 			}
 			pc += 2;
 			break;
 		case 0x0065:
-			X = V[(opcode&0x0F00) >> 8];
+			unsigned short X = V[(opcode&0x0F00) >> 8];
 			for(int i=0; i<X+1; i++){
 				V[i] = mem[I+i];
 			}
