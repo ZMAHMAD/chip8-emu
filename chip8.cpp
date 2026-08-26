@@ -1,6 +1,7 @@
 #include "chip8.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -29,10 +30,6 @@ std::array<unsigned char, 80> chip8_fontset =
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-SDL_AppResult S_EXIT() {
-    return SDL_APP_SUCCESS;
-}
-
 void chip8::initialize(){
     pc = 0x200;
     opcode = 0;
@@ -51,11 +48,13 @@ void chip8::initialize(){
     // Reset timers
     delay_timer = 0;
     sound_timer = 0;
+    srand(time(0));
+    starttime = SDL_GetPerformanceCounter();
 
     drawFlag = true;
 }
 
-int chip8::loadGame(char* filename){
+int chip8::loadGame(const char* filename){
     // Load program
     ifstream file(filename, ios::in | ios::binary | ios::ate);
     if(!file){
@@ -70,274 +69,274 @@ int chip8::loadGame(char* filename){
     }
 
     file.seekg(0, ios::beg);
-    file.read(reinterpret_cast<char*>(memory.begin()+0x200), size);
+    file.read(reinterpret_cast<char*>(memory.data()+0x200), size);
     file.close();
     return 0;
 }
 
 void chip8::emulateCycle(){
-    // FDE opcode
-    // Fetch opcode by ORing adjacent bytes
-    opcode = (memory[pc] << 8) | memory[pc + 1];
-    // Decode
-    switch(opcode & 0xF000){
-    case 0x0000:
-        switch(opcode& 0x0FFF){
-        case 0x00E0:
-            // Clear display
-            fill(gfx.begin(), gfx.end(), 0);
-            drawFlag = true;
+    if (waitingForKey) {
+        for (int i = 0; i < 16; i++) {
+            if (key[i]) {
+                V[waitKeyRegister] = i;
+                waitingForKey = false;
+                pc += 2;
+                break;
+            }
+        }
+    } else {
+        // FDE opcode
+        // Fetch opcode by ORing adjacent bytes
+        opcode = (memory[pc] << 8) | memory[pc + 1];
+        // Decode
+        switch(opcode & 0xF000){
+        case 0x0000:{
+            switch(opcode& 0x0FFF){
+            case 0x00E0:
+                // Clear display
+                fill(gfx.begin(), gfx.end(), 0);
+                drawFlag = true;
+                break;
+            case 0x00EE:
+                pc = stack[sp];
+                sp--;
+                pc += 2;
+                break;
+            default:
+                stack[sp] = pc;
+                sp++;
+                pc = (opcode & 0x0FFF);
+                break;
+            }
             break;
-        case 0x00EE:
-            pc = stack[sp];
-            sp--;
-            pc += 2;
+        }
+        case 0x1000:
+            pc = (opcode & 0x0FFF);
             break;
-        default:
+        case 0x2000:
             stack[sp] = pc;
             sp++;
             pc = (opcode & 0x0FFF);
             break;
-        }
-    case 0x1000:
-        pc = (opcode & 0x0FFF);
-        break;
-    case 0x2000:
-        stack[sp] = pc;
-        sp++;
-        pc = (opcode & 0x0FFF);
-        break;
-    case 0x3000:
-        if((V[opcode & 0x0F00] >> 8) == (opcode & 0x00FF)){
-            pc += 4;
-        } else {
-            pc += 2;
-        }
-        break;
-    case 0x4000:
-        if((V[opcode & 0x0F00] >> 8) != (opcode & 0x00FF)){
-            pc += 4;
-        } else {
-            pc += 2;
-        }
-        break;
-    case 0x5000:
-        if((V[opcode & 0x0F00] >> 8) == (V[opcode & 0x00F0] >> 4)){
-            pc += 4;
-        } else {
-            pc += 2;
-        }
-        break;
-    case 0x6000:
-        V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
-        pc += 2;
-        break;
-    case 0x7000:
-        V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
-        pc += 2;
-        break;
-    case 0x8000:{
-        unsigned short X = (opcode & 0x0F00) >> 8;
-        unsigned short Y = (opcode & 0x00F0) >> 4;
-        switch(opcode & 0x000F){
-        case 0x0000:
-            V[X] = V[Y];
-            pc += 2;
-            break;
-        case 0x0001:
-            V[X] = V[X] | V[Y];
-            pc += 2;
-            break;
-        case 0x0002:
-            V[X] = V[X] & V[Y];
-            pc += 2;
-            break;
-        case 0x0003:
-            V[X] = V[X] ^ V[Y];
-            pc += 2;
-            break;
-        case 0x0004:
-            V[0xF] = (V[X] > 255 - V[Y]) ? 1 : 0;
-            V[X] += V[Y];
-            pc += 2;
-            break;
-        case 0x0005:
-            // Note that VF is 0 when underflow and 1 otherwise
-            V[0xF] = (V[X] >= V[Y]) ? 1 : 0;
-            V[X] -= V[Y];
-            pc += 2;
-            break;
-        case 0x0006:
-            V[0xF] = V[X] & 0x0001;
-            V[X] = V[X] >> 1;
-            pc += 2;
-            break;
-        case 0x0007:
-            // Note that VF is 0 when underflow and 1 otherwise
-            V[0xF] = (V[X] <= V[Y]) ? 1 : 0;
-            V[X] = V[Y] - V[X];
-            pc += 2;
-            break;
-        case 0x000E:
-            V[0xF] = (V[X] & 0x8000) >> 12;
-            V[X] = V[X] << 1;
-            pc += 2;
-            break;
-        }
-        break;
-    }
-    case 0x9000:
-        if(V[(opcode&0x0F00) >> 8] != V[(opcode&0x0F00) >> 4]){
-            pc += 4;
-        } else {
-            pc += 2;
-        }
-        break;
-    case 0xA000:
-        I = opcode & 0x0FFF;
-        pc += 2;
-        break;
-    case 0xB000:
-        pc = V[0] + (opcode&0x0FFF);
-        break;
-    case 0xC000:
-        srand(time(0));
-        V[(opcode&0x0F00) >> 8] = (opcode&0x00FF) & (rand() % 256);
-        pc += 2;
-        break;
-    case 0xD000:{
-        // Sprite Operation
-        unsigned short x = V[(opcode&0x0F00)>>8];
-        unsigned short y = V[(opcode&0x00F0)>>8];
-        unsigned short height = opcode&0x000F;
-        unsigned short pixel;
-
-        V[0xF] = 0;
-        for(int yline = 0; yline < height; yline++){
-            pixel = memory[I+yline];
-
-            for(int xline = 0; xline < 8; xline++){
-                if(pixel & (0x80 >> xline) != 0) {
-                    if(gfx[(x + xline + ((y + yline) * 64)) % (64*32)] == 1){
-                        V[0xF] = 1;
-                    }
-                    // sprites wrap around to start of array
-                    gfx[(x + xline + ((y + yline) * 64)) % (64*32)] ^= 1;
-                }
-            }
-        }
-
-        drawFlag = true;
-        pc += 2;
-        break;
-    }
-    case 0xE000:
-        // Key Operations
-        switch(opcode&0x00FF){
-        case 0x009E:
-            if(key[(V[(opcode&0x0F00) >> 8]&0x0F)] != 0){
+        case 0x3000:
+            if(V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)){
                 pc += 4;
             } else {
                 pc += 2;
             }
             break;
-        case 0x00A1:
-            if(key[(V[(opcode&0x0F00) >> 8]&0x0F)] == 0){
+        case 0x4000:
+            if(V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)){
                 pc += 4;
             } else {
                 pc += 2;
             }
             break;
-        }
-        break;
-    case 0xF000:{
-        switch(opcode&0x00FF)
-        case 0x0007:
-            V[(opcode&0x0F00) >> 8] = delay_timer;
+        case 0x5000:
+            if(V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4]){
+                pc += 4;
+            } else {
+                pc += 2;
+            }
+            break;
+        case 0x6000:
+            V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
             pc += 2;
             break;
-        case 0x000A:{
-            // Key Operation
+        case 0x7000:
+            V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
+            pc += 2;
+            break;
+        case 0x8000:{
             unsigned short X = (opcode & 0x0F00) >> 8;
-            bool keyPressed = false;
-            while(!keyPressed){
-                SDL_Event event;
-                while (SDL_PollEvent(&event)){
-                    if(event.type == SDL_EVENT_QUIT){
-                        S_EXIT();
-                    } else if(event.type ==  SDL_EVENT_KEY_DOWN){
-                        uint8_t c8key = scancodeToChip8(event.key.scancode);
-                        if (c8key != 0xFF){
-                            key[c8key] = 1;
-                            V[X] = c8key;
-                            keyPressed = true;
+            unsigned short Y = (opcode & 0x00F0) >> 4;
+            switch(opcode & 0x000F){
+            case 0x0000:
+                V[X] = V[Y];
+                pc += 2;
+                break;
+            case 0x0001:
+                V[X] = V[X] | V[Y];
+                pc += 2;
+                break;
+            case 0x0002:
+                V[X] = V[X] & V[Y];
+                pc += 2;
+                break;
+            case 0x0003:
+                V[X] = V[X] ^ V[Y];
+                pc += 2;
+                break;
+            case 0x0004:
+                V[0xF] = (V[X] > 255 - V[Y]) ? 1 : 0;
+                V[X] += V[Y];
+                pc += 2;
+                break;
+            case 0x0005:
+                // Note that VF is 0 when underflow and 1 otherwise
+                V[0xF] = (V[X] >= V[Y]) ? 1 : 0;
+                V[X] -= V[Y];
+                pc += 2;
+                break;
+            case 0x0006:
+                V[0xF] = V[X] & 0x0001;
+                V[X] = V[X] >> 1;
+                pc += 2;
+                break;
+            case 0x0007:
+                // Note that VF is 0 when underflow and 1 otherwise
+                V[0xF] = (V[X] <= V[Y]) ? 1 : 0;
+                V[X] = V[Y] - V[X];
+                pc += 2;
+                break;
+            case 0x000E:
+                V[0xF] = (V[X] & 0x80) >> 7;
+                V[X] = V[X] << 1;
+                pc += 2;
+                break;
+            }
+            break;
+        }
+        case 0x9000:
+            if(V[(opcode&0x0F00) >> 8] != V[(opcode&0x00F0) >> 4]){
+                pc += 4;
+            } else {
+                pc += 2;
+            }
+            break;
+        case 0xA000:
+            I = opcode & 0x0FFF;
+            pc += 2;
+            break;
+        case 0xB000:
+            pc = V[0] + (opcode&0x0FFF);
+            break;
+        case 0xC000:
+            V[(opcode&0x0F00) >> 8] = (opcode&0x00FF) & (rand() % 256);
+            pc += 2;
+            break;
+        case 0xD000:{
+            // Sprite Operation
+            unsigned short x = V[(opcode&0x0F00)>>8];
+            unsigned short y = V[(opcode&0x00F0)>>4];
+            unsigned short height = opcode&0x000F;
+            unsigned short pixel;
+
+            V[0xF] = 0;
+            for(int yline = 0; yline < height; yline++){
+                pixel = memory[I+yline];
+
+                for(int xline = 0; xline < 8; xline++){
+                    if((pixel & (0x80 >> xline)) != 0) {
+                        if(gfx[(x + xline + ((y + yline) * 64)) % (64*32)] == 1){
+                            V[0xF] = 1;
                         }
-                    } else if(event.type == SDL_EVENT_KEY_UP){
-                        uint8_t c8key = scancodeToChip8(event.key.scancode);
-                        if(c8key != 0xFF){
-                            key[c8key] = 0;
-                        }
+                        // sprites wrap around to start of array
+                        gfx[(x + xline + ((y + yline) * 64)) % (64*32)] ^= 1;
                     }
                 }
             }
             pc += 2;
             break;
         }
-        case 0x0015:
-            delay_timer = V[(opcode&0x0F00) >> 8];
-            pc += 2;
-            break;
-        case 0x0018:
-            sound_timer = V[(opcode&0x0F00) >> 8];
-            pc += 2;
-            break;
-        case 0x001E:
-            I += V[(opcode&0x0F00) >> 8];
-            pc += 2;
-            break;
-        case 0x0029:{
-            // Sprite Operation
-            unsigned short X = (opcode&0x0F00) >> 8;
-            X = V[X] & 0x0F;
-            I = memory[80+(5*X)];
-            break;
-        }
-        case 0x0033:{
-            unsigned short X = V[(opcode&0x0F00) >> 8];
-            memory[I] = X / 100;
-            memory[I+1] = (X / 10) % 10;
-            memory[I+2] = X % 10;
-            pc += 2;
-            break;
-        }
-        case 0x0055:{
-            unsigned short X = V[(opcode&0x0F00) >> 8];
-            for(int i=0; i<X+1; i++){
-                memory[I+i] = V[i];
+        case 0xE000:
+            // Key Operations
+            switch(opcode&0x00FF){
+            case 0x009E:
+                if(key[(V[(opcode&0x0F00) >> 8]&0x0F)] != 0){
+                    pc += 4;
+                } else {
+                    pc += 2;
+                }
+                break;
+            case 0x00A1:
+                if(key[(V[(opcode&0x0F00) >> 8]&0x0F)] == 0){
+                    pc += 4;
+                } else {
+                    pc += 2;
+                }
+                break;
             }
-            pc += 2;
             break;
-        }
-        case 0x0065:
-            unsigned short X = V[(opcode&0x0F00) >> 8];
-            for(int i=0; i<X+1; i++){
-                V[i] = memory[I+i];
+        case 0xF000:{
+            switch(opcode&0x00FF){
+            case 0x0007:
+                V[(opcode&0x0F00) >> 8] = delay_timer;
+                pc += 2;
+                break;
+            case 0x000A:{
+                // Key Operation
+                unsigned short X = (opcode & 0x0F00) >> 8;
+                waitingForKey = true;
+                waitKeyRegister = X;
+                break;
             }
-            pc += 2;
-            break;
+            case 0x0015:
+                delay_timer = V[(opcode&0x0F00) >> 8];
+                pc += 2;
+                break;
+            case 0x0018:
+                sound_timer = V[(opcode&0x0F00) >> 8];
+                pc += 2;
+                break;
+            case 0x001E:
+                I += V[(opcode&0x0F00) >> 8];
+                pc += 2;
+                break;
+            case 0x0029:{
+                // Sprite Operation
+                unsigned short X = (opcode&0x0F00) >> 8;
+                X = V[X] & 0x0F;
+                I = 80+(5*X);
+                pc += 2;
+                break;
+            }
+            case 0x0033:{
+                unsigned short X = V[(opcode&0x0F00) >> 8];
+                memory[I] = X / 100;
+                memory[I+1] = (X / 10) % 10;
+                memory[I+2] = X % 10;
+                pc += 2;
+                break;
+            }
+            case 0x0055:{
+                unsigned short X = (opcode&0x0F00) >> 8;
+                for(int i=0; i<X+1; i++){
+                    memory[I+i] = V[i];
+                }
+                pc += 2;
+                break;
+            }
+            case 0x0065:{
+                unsigned short X = (opcode&0x0F00) >> 8;
+                for(int i=0; i<X+1; i++){
+                    V[i] = memory[I+i];
+                }
+                pc += 2;
+                break;
+            }
+            }
+        }
         }
     }
 
+    Uint64 now = SDL_GetPerformanceCounter();
+    timerAcc += (double)(now - starttime) / SDL_GetPerformanceFrequency();
+    starttime = now;
 
-    // Update timers
-    if (delay_timer > 0) delay_timer--;
-    if (sound_timer > 0) {
-        if(sound_timer == 1){
-            // TODO: make actual sound
-            printf("BEEP!\n");
+    // Update timers at 60Hz
+    if(timerAcc >= 1.0/60.0){
+        // decrement timers
+        if (delay_timer > 0) delay_timer--;
+        if (sound_timer > 0) {
+            if(sound_timer == 1){
+                // TODO: make actual sound
+                printf("BEEP!\n");
+            }
+            sound_timer--;
         }
-        sound_timer--;
-    }
+        timerAcc -= 1.0 / 60.0;
+    }    
 }
 
 // Maps SDL scancodes to CHIP-8 hex key values

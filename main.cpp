@@ -2,12 +2,13 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <vector>
+#include <iostream>
 #include "chip8.h"
 
 constexpr int windowWidth = 64;
 constexpr int windowHeight = 32;
 constexpr int SCALE = 10;
-char* gameName = "pong2.c8";
+const char* gameName = "draw_test.ch8";
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -51,6 +52,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event* event) {
     }
     else if (event->type == SDL_EVENT_KEY_UP) {
         uint8_t c8key = c8.scancodeToChip8(event->key.scancode);
+
         if (c8key != 0xFF) c8.key[c8key] = 0;
     }
     return SDL_APP_CONTINUE;
@@ -59,9 +61,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event* event) {
 SDL_AppResult SDL_AppIterate(void *appstate) {
     c8.emulateCycle();
 
-    if(c8.drawFlag){
-        std::vector<SDL_FRect> rects;
-        rects.reserve(64*32);
+    //if(c8.drawFlag){
+        //std::vector<SDL_FRect> rects;
+        //rects.reserve(64*32);
 
         //update screen, draw black background
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -71,21 +73,21 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
         for(int i=0; i < 64*32; i++){
             if (c8.gfx[i]){
-                int x = (i % 64)*SCALE;
-                int y = (i / 64)*SCALE;
-                rects.push_back(SDL_FRect{
-                    (float)x,
-                    (float)y,
-                    (float)SCALE,
-                    (float)SCALE
-                });
+                SDL_FRect rect{
+                    static_cast<float>(i % 64),
+                    static_cast<float>(i / 64),
+                    1.0f,
+                    1.0f
+                };
+                SDL_RenderFillRect(renderer, &rect);
             }
         }
 
-        SDL_RenderFillRects(renderer, rects.data(), rects.size());
+        //SDL_RenderFillRects(renderer, rects.data(), rects.size());
         SDL_RenderPresent(renderer);
+
         c8.drawFlag = false;
-    }
+    //}
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
@@ -93,5 +95,4 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
     // SDL cleans it up for us.
 }
-
 

@@ -1,3 +1,4 @@
 /home/zaid/Documents/devstuff/chip8/build/CMakeFiles/Chip8.dir
+/home/zaid/Documents/devstuff/chip8/build/CMakeFiles/huh.dir
 /home/zaid/Documents/devstuff/chip8/build/CMakeFiles/edit_cache.dir
 /home/zaid/Documents/devstuff/chip8/build/CMakeFiles/rebuild_cache.dir

@@ -64,6 +64,7 @@ CMAKE_BINARY_DIR = /home/zaid/Documents/devstuff/chip8/build
 
 # The main recursive "all" target.
 all: CMakeFiles/Chip8.dir/all
+all: CMakeFiles/huh.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -72,6 +73,7 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/Chip8.dir/clean
+clean: CMakeFiles/huh.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -99,6 +101,32 @@ Chip8: CMakeFiles/Chip8.dir/rule
 CMakeFiles/Chip8.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Chip8.dir/build.make CMakeFiles/Chip8.dir/clean
 .PHONY : CMakeFiles/Chip8.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/huh.dir
+
+# All Build rule for target.
+CMakeFiles/huh.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/zaid/Documents/devstuff/chip8/build/CMakeFiles --progress-num=4,5 "Built target huh"
+.PHONY : CMakeFiles/huh.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/huh.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/zaid/Documents/devstuff/chip8/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/huh.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/zaid/Documents/devstuff/chip8/build/CMakeFiles 0
+.PHONY : CMakeFiles/huh.dir/rule
+
+# Convenience name for target.
+huh: CMakeFiles/huh.dir/rule
+.PHONY : huh
+
+# clean rule for target.
+CMakeFiles/huh.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/clean
+.PHONY : CMakeFiles/huh.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <array>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_stdinc.h>
 
 class chip8 {
 public:
@@ -12,7 +13,7 @@ public:
 	bool drawFlag;		// if flag set, update screen
 
 	void initialize();		// initialize memory
-	int loadGame(char* filename);		// load program into memory
+	int loadGame(const char* filename);		// load program into memory
 	void emulateCycle();	// emulate one cycle
 	uint8_t scancodeToChip8(SDL_Scancode code);
 
@@ -26,7 +27,7 @@ private:
 	unsigned short pc;
 
 	// stack + sp
-	std::array<unsigned char, 16> stack;
+	std::array<unsigned short, 16> stack;
 	unsigned short sp;
 
 	// 4KB memory
@@ -41,4 +42,10 @@ private:
 	// buzzer when sound_timer nonzero. Write-only
 	unsigned char delay_timer;
 	unsigned char sound_timer;
+	Uint64 starttime;
+	double timerAcc = 0;
+
+	// internal regs for opcode FX0A to wait for key press
+	bool waitingForKey = false;
+	unsigned short waitKeyRegister = 0;
 };

@@ -129,6 +129,19 @@ Chip8/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Chip8.dir/build.make CMakeFiles/Chip8.dir/build
 .PHONY : Chip8/fast
 
+#=============================================================================
+# Target rules for targets named huh
+
+# Build rule for target.
+huh: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 huh
+.PHONY : huh
+
+# fast build rule for target.
+huh/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/build
+.PHONY : huh/fast
+
 chip8.o: chip8.cpp.o
 .PHONY : chip8.o
 
@@ -152,6 +165,30 @@ chip8.s: chip8.cpp.s
 chip8.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Chip8.dir/build.make CMakeFiles/Chip8.dir/chip8.cpp.s
 .PHONY : chip8.cpp.s
+
+huh.o: huh.cpp.o
+.PHONY : huh.o
+
+# target to build an object file
+huh.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/huh.cpp.o
+.PHONY : huh.cpp.o
+
+huh.i: huh.cpp.i
+.PHONY : huh.i
+
+# target to preprocess a source file
+huh.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/huh.cpp.i
+.PHONY : huh.cpp.i
+
+huh.s: huh.cpp.s
+.PHONY : huh.s
+
+# target to generate assembly for a file
+huh.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/huh.dir/build.make CMakeFiles/huh.dir/huh.cpp.s
+.PHONY : huh.cpp.s
 
 main.o: main.cpp.o
 .PHONY : main.o
@@ -186,9 +223,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... Chip8"
+	@echo "... huh"
 	@echo "... chip8.o"
 	@echo "... chip8.i"
 	@echo "... chip8.s"
+	@echo "... huh.o"
+	@echo "... huh.i"
+	@echo "... huh.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
