@@ -1,14 +1,18 @@
+#include <cstdint>
+#include <array>
+#include <SDL3/SDL.h>
+
 class chip8 {
 public:
 	// pixel states (64 x 32), 1 or 0
-	unsigned char gfx[64 * 32];
+	std::array<unsigned char, 64*32> gfx;
 	// keystate
-	unsigned char key[16];
+	std::array<unsigned char, 16> key;
 
 	bool drawFlag;		// if flag set, update screen
 
 	void initialize();		// initialize memory
-	char loadGame(char* filename);		// load program into memory
+	int loadGame(char* filename);		// load program into memory
 	void emulateCycle();	// emulate one cycle
 	uint8_t scancodeToChip8(SDL_Scancode code);
 
@@ -16,20 +20,21 @@ private:
 	// 2 byte opcode
 	unsigned short opcode;
 	// 15 general use regs, 1 carry reg
-	unsigned char V[16];
+	std::array<unsigned char, 16> V;
 	// Address reg+pc
 	unsigned short I;
 	unsigned short pc;
 
 	// stack + sp
-	unsigned short stack[16];
+	std::array<unsigned char, 16> stack;
 	unsigned short sp;
 
 	// 4KB memory
 	// 0x000 - 0x1FF - Interpreter/fonts
 	// 0x050 - 0x0A0 - 4x5 pixel font set
 	// 0x200 - 0xFFF - Program ROM and RAM
-	unsigned char memory[4096];
+	std::array<unsigned char, 4096> memory;
+
 
 	// hardware regs
 	// when set above 0, counts down at 60Hz

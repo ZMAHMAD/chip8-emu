@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/Chip8.dir/chip8.cpp.o"
+  "CMakeFiles/Chip8.dir/chip8.cpp.o.d"
   "CMakeFiles/Chip8.dir/main.cpp.o"
   "CMakeFiles/Chip8.dir/main.cpp.o.d"
   "Chip8"

@@ -6,9 +6,34 @@
 #include <fstream>
 #include <cstdlib>
 #include <ctime>
+#include <cstdint>
 using namespace std;
 
-char chip8::initialize(){
+std::array<unsigned char, 80> chip8_fontset = 
+{ 
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
+
+SDL_AppResult S_EXIT() {
+    return SDL_APP_SUCCESS;
+}
+
+void chip8::initialize(){
     pc = 0x200;
     opcode = 0;
     I = 0;
@@ -30,22 +55,22 @@ char chip8::initialize(){
     drawFlag = true;
 }
 
-char chip8::loadGame(char* filename){
+int chip8::loadGame(char* filename){
     // Load program
     ifstream file(filename, ios::in | ios::binary | ios::ate);
     if(!file){
         cout << "Error opening program for reading!";
-        return -1;
+        return 1;
     }
 
     ifstream::pos_type size = file.tellg();
     if (size > (4096 - 0x200)) {
         cout << "ROM too large to fit in memory!";
-        return -1;
+        return 1;
     }
 
     file.seekg(0, ios::beg);
-    file.read(reinterpret_cast<char*>(memory+0x200), size);
+    file.read(reinterpret_cast<char*>(memory.begin()+0x200), size);
     file.close();
     return 0;
 }
@@ -111,24 +136,24 @@ void chip8::emulateCycle(){
         V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
         pc += 2;
         break;
-    case 0x8000:
+    case 0x8000:{
         unsigned short X = (opcode & 0x0F00) >> 8;
         unsigned short Y = (opcode & 0x00F0) >> 4;
         switch(opcode & 0x000F){
         case 0x0000:
-            V[X] = V[Y]
+            V[X] = V[Y];
             pc += 2;
             break;
         case 0x0001:
-            V[X] = V[X] | V[Y]
+            V[X] = V[X] | V[Y];
             pc += 2;
             break;
         case 0x0002:
-            V[X] = V[X] & V[Y]
+            V[X] = V[X] & V[Y];
             pc += 2;
             break;
         case 0x0003:
-            V[X] = V[X] ^ V[Y]
+            V[X] = V[X] ^ V[Y];
             pc += 2;
             break;
         case 0x0004:
@@ -160,6 +185,7 @@ void chip8::emulateCycle(){
             break;
         }
         break;
+    }
     case 0x9000:
         if(V[(opcode&0x0F00) >> 8] != V[(opcode&0x0F00) >> 4]){
             pc += 4;
@@ -179,10 +205,10 @@ void chip8::emulateCycle(){
         V[(opcode&0x0F00) >> 8] = (opcode&0x00FF) & (rand() % 256);
         pc += 2;
         break;
-    case 0xD000:
+    case 0xD000:{
         // Sprite Operation
-        unsigned short X = V[(opcode&0x0F00)>>8];
-        unsigned short Y = V[(opcode&0x00F0)>>8];
+        unsigned short x = V[(opcode&0x0F00)>>8];
+        unsigned short y = V[(opcode&0x00F0)>>8];
         unsigned short height = opcode&0x000F;
         unsigned short pixel;
 
@@ -204,6 +230,7 @@ void chip8::emulateCycle(){
         drawFlag = true;
         pc += 2;
         break;
+    }
     case 0xE000:
         // Key Operations
         switch(opcode&0x00FF){
@@ -223,13 +250,13 @@ void chip8::emulateCycle(){
             break;
         }
         break;
-    case 0xF000:
-        switch(opcode&0x00FF){
+    case 0xF000:{
+        switch(opcode&0x00FF)
         case 0x0007:
             V[(opcode&0x0F00) >> 8] = delay_timer;
             pc += 2;
             break;
-        case 0x000A:
+        case 0x000A:{
             // Key Operation
             unsigned short X = (opcode & 0x0F00) >> 8;
             bool keyPressed = false;
@@ -255,6 +282,7 @@ void chip8::emulateCycle(){
             }
             pc += 2;
             break;
+        }
         case 0x0015:
             delay_timer = V[(opcode&0x0F00) >> 8];
             pc += 2;
@@ -267,26 +295,29 @@ void chip8::emulateCycle(){
             I += V[(opcode&0x0F00) >> 8];
             pc += 2;
             break;
-        case 0x0029:
+        case 0x0029:{
             // Sprite Operation
             unsigned short X = (opcode&0x0F00) >> 8;
             X = V[X] & 0x0F;
             I = memory[80+(5*X)];
             break;
-        case 0x0033:
+        }
+        case 0x0033:{
             unsigned short X = V[(opcode&0x0F00) >> 8];
             memory[I] = X / 100;
             memory[I+1] = (X / 10) % 10;
             memory[I+2] = X % 10;
             pc += 2;
             break;
-        case 0x0055:
+        }
+        case 0x0055:{
             unsigned short X = V[(opcode&0x0F00) >> 8];
             for(int i=0; i<X+1; i++){
                 memory[I+i] = V[i];
             }
             pc += 2;
             break;
+        }
         case 0x0065:
             unsigned short X = V[(opcode&0x0F00) >> 8];
             for(int i=0; i<X+1; i++){
@@ -308,26 +339,6 @@ void chip8::emulateCycle(){
         sound_timer--;
     }
 }
-
-unsigned char chip8_fontset[80] =
-{ 
-    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
-    0x20, 0x60, 0x20, 0x20, 0x70, // 1
-    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
-    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
-    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
-    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
-    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
-    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
-    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
-    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
-    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
-    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
-    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
-    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
-    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
-};
 
 // Maps SDL scancodes to CHIP-8 hex key values
 uint8_t chip8::scancodeToChip8(SDL_Scancode code) {
@@ -354,8 +365,4 @@ uint8_t chip8::scancodeToChip8(SDL_Scancode code) {
 
     default: return 0xFF; // sentinel: not a CHIP-8 key
     }
-}
-
-SDL_AppResult S_EXIT() {
-    return SDL_APP_SUCCESS;
 }
