@@ -7,9 +7,10 @@ public:
 
 	bool drawFlag;		// if flag set, update screen
 
+	void initialize();		// initialize memory
 	char loadGame(char* filename);		// load program into memory
 	void emulateCycle();	// emulate one cycle
-	//void setKeys();			// store key press
+	uint8_t scancodeToChip8(SDL_Scancode code);
 
 private:
 	// 2 byte opcode
@@ -35,6 +36,4 @@ private:
 	// buzzer when sound_timer nonzero. Write-only
 	unsigned char delay_timer;
 	unsigned char sound_timer;
-
-	void initialize();		// initialize memory
 };

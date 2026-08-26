@@ -9,7 +9,7 @@ constexpr int windowHeight = 32;
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
-chip8 myChip8;
+chip8 c8;
 
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     SDL_SetAppMetadata("Chip8 Example", "1.0", "com.example.chip8");
@@ -30,8 +30,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     SDL_SetRenderLogicalPresentation(renderer, windowWidth, windowHeight, 
         SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-    myChip8.initialize();
-    myChip8.loadGame("pong");
+    c8.initialize();
+    c8.loadGame("pong");
 
     return SDL_APP_CONTINUE;
 }
@@ -40,15 +40,25 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event* event) {
     if (event->type == SDL_EVENT_QUIT) {
         return SDL_APP_SUCCESS;
     }
+    else if (event->type == SDL_EVENT_KEY_DOWN) {
+        uint8_t c8key = c8.scancodeToChip8(event->key.scancode);
+        if (c8key != 0xFF) c8.key[c8key] = 1;
+    }
+    else if (event->type == SDL_EVENT_KEY_UP) {
+        uint8_t c8key = c8.scancodeToChip8(event->key.scancode);
+        if (c8key != 0xFF) c8.key[c8key] = 0;
+    }
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-    const double now = ((double)SDL_GetTicks()) / 1000.0;  /* convert from milliseconds to seconds. */
-    /* choose the color for the frame we will draw. The sine wave trick makes it fade between colors smoothly. */
-    const float red = (float) (0.5 + 0.5 * SDL_sin(now));
-    const float green = (float) (0.5 + 0.5 * SDL_sin(now + SDL_PI_D * 2 / 3));
-    const float blue = (float) (0.5 + 0.5 * SDL_sin(now + SDL_PI_D * 4 / 3));
+    c8.emulateCycle();
+
+
+    if(c8.drawFlag){
+        //update screen
+    }
+
     SDL_SetRenderDrawColorFloat(renderer, red, green, blue, SDL_ALPHA_OPAQUE_FLOAT);  /* new color, full alpha. */
 
     /* clear the window to the draw color. */
@@ -63,3 +73,5 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
     // SDL cleans it up for us.
 }
+
+

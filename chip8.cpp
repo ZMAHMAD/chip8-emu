@@ -55,8 +55,7 @@ void chip8::emulateCycle(){
     // Fetch opcode by ORing adjacent bytes
     opcode = (memory[pc] << 8) | memory[pc + 1];
     // Decode
-    switch(opcode & 0xF000)
-    {
+    switch(opcode & 0xF000){
     case 0x0000:
         switch(opcode& 0x0FFF){
         case 0x00E0:
@@ -199,6 +198,7 @@ void chip8::emulateCycle(){
                     // sprites wrap around to start of array
                     gfx[(x + xline + ((y + yline) * 64)) % (64*32)] ^= 1;
                 }
+            }
         }
 
         drawFlag = true;
@@ -330,7 +330,7 @@ unsigned char chip8_fontset[80] =
 };
 
 // Maps SDL scancodes to CHIP-8 hex key values
-uint8_t scancodeToChip8(SDL_Scancode code) {
+uint8_t chip8::scancodeToChip8(SDL_Scancode code) {
     switch(code){
     case SDL_SCANCODE_1: return 0x1;
     case SDL_SCANCODE_2: return 0x2;
