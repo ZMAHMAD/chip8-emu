@@ -1,3 +1,5 @@
+// Helper file to compile .ch8 files from hexcode written here.
+
 #include <fstream>
 #include <iostream>
 #include <vector>

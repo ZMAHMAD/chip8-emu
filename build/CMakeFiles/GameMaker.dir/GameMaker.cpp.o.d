@@ -1,4 +1,5 @@
-CMakeFiles/huh.dir/huh.cpp.o: /home/zaid/Documents/devstuff/chip8/huh.cpp \
+CMakeFiles/GameMaker.dir/GameMaker.cpp.o: \
+ /home/zaid/Documents/devstuff/chip8/GameMaker.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/13/fstream \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \

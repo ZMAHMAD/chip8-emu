@@ -1,3 +1,5 @@
+// Chip8 Core Implementation
+
 #include "chip8.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -58,13 +60,13 @@ int chip8::loadGame(const char* filename){
     // Load program
     ifstream file(filename, ios::in | ios::binary | ios::ate);
     if(!file){
-        cout << "Error opening program for reading!";
+        cout << "Error opening program for reading!\n";
         return 1;
     }
 
     ifstream::pos_type size = file.tellg();
     if (size > (4096 - 0x200)) {
-        cout << "ROM too large to fit in memory!";
+        cout << "ROM too large to fit in memory!\n";
         return 1;
     }
 

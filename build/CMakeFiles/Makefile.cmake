@@ -53,5 +53,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/Chip8.dir/DependInfo.cmake"
-  "CMakeFiles/huh.dir/DependInfo.cmake"
+  "CMakeFiles/GameMaker.dir/DependInfo.cmake"
   )

@@ -1,3 +1,5 @@
+// Chip8 Declarations
+
 #include <cstdint>
 #include <array>
 #include <SDL3/SDL.h>

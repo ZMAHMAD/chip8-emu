@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/zaid/Documents/devstuff/chip8/huh.cpp" "CMakeFiles/huh.dir/huh.cpp.o" "gcc" "CMakeFiles/huh.dir/huh.cpp.o.d"
+  "/home/zaid/Documents/devstuff/chip8/GameMaker.cpp" "CMakeFiles/GameMaker.dir/GameMaker.cpp.o" "gcc" "CMakeFiles/GameMaker.dir/GameMaker.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

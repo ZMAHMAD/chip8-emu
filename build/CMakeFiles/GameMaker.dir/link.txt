@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/GameMaker.dir/GameMaker.cpp.o -o GameMaker 
