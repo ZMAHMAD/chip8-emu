@@ -3,12 +3,12 @@
 #include <SDL3/SDL_main.h>
 #include <vector>
 #include <iostream>
+#include <string>
 #include "chip8.h"
 
 constexpr int windowWidth = 64;
 constexpr int windowHeight = 32;
 constexpr int SCALE = 10;
-const char* gameName = "draw_test.ch8";
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -35,7 +35,14 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
         SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     c8.initialize();
-    if(c8.loadGame(gameName)){
+
+    if(argc == 2){
+        std::string fname = std::string(argv[1]) + ".ch8";
+        if(c8.loadGame(fname.c_str())){
+            return SDL_APP_FAILURE;
+        }
+    } else {
+        std::cout << "Usage: ./build/Chip8 {GAME_NAME}\n";
         return SDL_APP_FAILURE;
     }
 
